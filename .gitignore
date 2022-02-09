@@ -1,1 +1,7 @@
+membot
+a.out
+settings.json
+*.o
+build/*
+#*.json
 .github/**
