@@ -11,7 +11,7 @@
         {
             "label": "build",
             "type": "shell",
-            "command": "make build",
+            "command": "cd build ; make",
             "problemMatcher": [],
             "group": {
                 "kind": "build",
