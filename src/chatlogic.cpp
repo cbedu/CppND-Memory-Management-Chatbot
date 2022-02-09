@@ -1,3 +1,25 @@
+/* ### Task 5 : Moving the ChatBot
+
+In file `chatlogic.cpp`, create a local `ChatBot` instance on the stack at the bottom of function `LoadAnswerGraphFromFile`.
+Then, use move semantics to pass the `ChatBot` instance into the root node. Make sure that `ChatLogic` has no ownership
+relation to the `ChatBot` instance and thus is no longer responsible for memory allocation and deallocation.
+Note that the member `_chatBot` of `ChatLogic` remains so it can be used as a communication handle between GUI and `ChatBot` instance.
+Make all required changes in files `chatlogic.h` / `chatlogic.cpp` and `graphnode.h` / `graphnode.cpp`.
+When the program is executed, messages on which part of the Rule of Five components of `ChatBot` is called should be printed to the console.
+When sending a query to the `ChatBot`, the output should look like the following:
+ChatBot Constructor
+ChatBot Move Constructor
+ChatBot Move Assignment Operator
+ChatBot Destructor
+ChatBot Destructor
+
+My Summary
+ChatBot now needs to make proper use of the Copy and Move rules.
+Instance on stack in LoadAnswerGraphFromFile
+Move to root node, ChatLogic does not own ChatBot. No more memory alloc or de-alloc.
+_chatbot in ChatLogic used for GUI comms
+*/
+
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -18,10 +40,10 @@ ChatLogic::ChatLogic()
     ////
 
     // create instance of chatbot
-    _chatBot = new ChatBot("../images/chatbot.png");
+    //_chatBot = new ChatBot("../images/chatbot.png"); // no need for new allocation.
 
     // add pointer to chatlogic so that chatbot answers can be passed on to the GUI
-    _chatBot->SetChatLogicHandle(this);
+    //_chatBot->SetChatLogicHandle(this);   // replaced with unique_ptr
 
     ////
     //// EOF STUDENT CODE
@@ -33,7 +55,7 @@ ChatLogic::~ChatLogic()
     ////
 
     // delete chatbot instance
-    delete _chatBot;
+    //delete _chatBot;  // no new means no delete needed
 
     //// Nodes now get deleted when scope is lost.
     // // delete all nodes
@@ -217,9 +239,15 @@ void ChatLogic::LoadAnswerGraphFromFile(std::string filename)
         }
     }
 
+    // Our new ChatBot needs to be added to root node, declare here.
+    // tweaked from previous default constructor
+    std::unique_ptr<ChatBot>_chatBotPtr = std::make_unique<ChatBot>("../images/chatbot.png");
+    _chatBotPtr->SetChatLogicHandle(this);
+
     // add chatbot to graph root node
-    _chatBot->SetRootNode(rootNode);
-    rootNode->MoveChatbotHere(_chatBot);
+    _chatBotPtr->SetRootNode(rootNode);
+    _chatBot = _chatBotPtr.get();
+    rootNode->MoveChatbotHere(std::move(_chatBotPtr));
     
     ////
     //// EOF STUDENT CODE

@@ -9,7 +9,7 @@ Where required, make changes to the code such that data structures and function 
 #define CHATGUI_H_
 
 #include <wx/wx.h>
-#include<memory>
+#include <memory>
 
 class ChatLogic; // forward declaration
 
