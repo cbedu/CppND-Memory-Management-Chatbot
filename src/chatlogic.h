@@ -1,8 +1,23 @@
+/*
+### Task 3 : Exclusive Ownership 2
+In file `chatlogic.h` / `chatlogic.cpp`, adapt the vector `_nodes` in a way that the instances of `GraphNodes`
+to which the vector elements refer are exclusively owned by the class `ChatLogic`.
+Use an appropriate type of smart pointer to achieve this.
+Where required, make changes to the code such that data structures and function parameters reflect the changes.
+When passing the `GraphNode` instances to functions, make sure to not transfer ownership and try to contain the
+changes to class `ChatLogic` where possible.
+
+My Summary:
+_nodes become unique_ptr in GraphNodes are moved to ChatLogic class
+All handling will need std::move() to ChatLogic,
+but to just be const raw functions when other functions are reading the data.
+*/
 #ifndef CHATLOGIC_H_
 #define CHATLOGIC_H_
 
 #include <vector>
 #include <string>
+#include <memory>
 #include "chatgui.h"
 
 // forward declarations
@@ -17,7 +32,7 @@ private:
     ////
 
     // data handles (owned)
-    std::vector<GraphNode *> _nodes;
+    std::vector<std::unique_ptr<GraphNode>> _nodes; // all references now need protecting
     std::vector<GraphEdge *> _edges;
 
     ////
