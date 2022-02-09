@@ -28,6 +28,7 @@ ChatBot::ChatBot(std::string filename)
 
     // load image into heap memory
     _image = new wxBitmap(filename, wxBITMAP_TYPE_PNG);
+
 }
 
 ChatBot::~ChatBot()
@@ -44,6 +45,98 @@ ChatBot::~ChatBot()
 
 //// STUDENT CODE
 ////
+
+ChatBot::ChatBot(ChatBot &oldBot)
+{
+    std::cout << "ChatBot Copy Constructor" << std::endl;
+
+    // external data (we only need to get the refernce to it)
+    _currentNode = oldBot._currentNode;
+    _rootNode = oldBot._rootNode;
+    _chatLogic = oldBot._chatLogic;
+
+    // owned data (so we would need to duplicate it)
+    // from default ChatBot constructor
+    _image = new wxBitmap();
+    _image = oldBot._image;
+    
+    // need to now point at this chatBot (thereby causing old one to go out of scope.)
+    // tweaked from chatlogic constructor
+    _chatLogic->SetChatbotHandle(this);
+}// copy constructor
+
+ChatBot &ChatBot::operator=(ChatBot &oldBot)
+{
+    std::cout << "ChatBot Copy Assignment Operator" << std::endl;
+
+    // self reference workaround
+    if (this == &oldBot)
+    {
+        return *this;
+    }
+
+    // same as copy constructor but with return val.
+    _currentNode = oldBot._currentNode;
+    _rootNode = oldBot._rootNode;
+    _chatLogic = oldBot._chatLogic;
+
+    _image = new wxBitmap();
+    _image = oldBot._image;
+
+    _chatLogic->SetChatbotHandle(this);
+
+    return *this;
+}// copy assignment operator
+
+ChatBot::ChatBot(ChatBot &&oldBot)
+{
+    std::cout << "ChatBot Move Constructor" << std::endl;
+
+    // get values like copy, but invalidate previous version
+    _currentNode = oldBot._currentNode;
+    _rootNode = oldBot._rootNode;
+    _chatLogic = oldBot._chatLogic;
+
+    _image = new wxBitmap();
+    _image = oldBot._image;
+
+    // now need to remove all previous connections
+    oldBot._currentNode = nullptr;
+    oldBot._rootNode = nullptr;
+    oldBot._chatLogic = nullptr;
+    oldBot._image = NULL;
+
+    _chatLogic->SetChatbotHandle(this);
+
+}// move constructor
+
+ChatBot &ChatBot::operator=(ChatBot &&oldBot)
+{
+    std::cout << "ChatBot Move Assignment Operator" << std::endl;
+
+    // same as copy assignment, with invalidation from move constructor
+    // self reference workaround
+    if (this == &oldBot)
+    {
+        return *this;
+    }
+
+    _currentNode = oldBot._currentNode;
+    _rootNode = oldBot._rootNode;
+    _chatLogic = oldBot._chatLogic;
+
+    _image = new wxBitmap();
+    _image = oldBot._image;
+
+    oldBot._currentNode = nullptr;
+    oldBot._rootNode = nullptr;
+    oldBot._chatLogic = nullptr;
+    oldBot._image = NULL;
+
+    _chatLogic->SetChatbotHandle(this);
+    
+    return *this;
+}// move assignement operator
 
 ////
 //// EOF STUDENT CODE

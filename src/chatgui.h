@@ -1,7 +1,15 @@
+/*
+### Task 1 : Exclusive Ownership 1
+In file `chatgui.h` / `chatgui.cpp`, make `_chatLogic` an exclusive resource to class `ChatbotPanelDialog` using an appropriate smart pointer.
+Where required, make changes to the code such that data structures and function parameters reflect the new structure.
+*/
+
+
 #ifndef CHATGUI_H_
 #define CHATGUI_H_
 
 #include <wx/wx.h>
+#include <memory>
 
 class ChatLogic; // forward declaration
 
@@ -16,7 +24,8 @@ private:
     //// STUDENT CODE
     ////
 
-    ChatLogic *_chatLogic;
+//    ChatLogic *_chatLogic;
+    std::unique_ptr<ChatLogic> _chatLogic;// = std::make_unique<ChatLogic>(); 
 
     ////
     //// EOF STUDENT CODE
@@ -27,7 +36,8 @@ public:
     ~ChatBotPanelDialog();
 
     // getter / setter
-    ChatLogic *GetChatLogicHandle() { return _chatLogic; }
+    //std::unique_ptr<ChatLogic> GetChatLogicHandle() { return std::move(_chatLogic); }  //Incorrect, this is to move the ownership
+    ChatLogic *GetChatLogicHandle() { return _chatLogic.get(); } //this is to return the raw pointer. When ownership of data not needed.
 
     // events
     void paintEvent(wxPaintEvent &evt);

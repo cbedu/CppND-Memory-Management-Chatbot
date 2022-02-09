@@ -1,3 +1,25 @@
+/* ### Task 5 : Moving the ChatBot
+
+In file `chatlogic.cpp`, create a local `ChatBot` instance on the stack at the bottom of function `LoadAnswerGraphFromFile`.
+Then, use move semantics to pass the `ChatBot` instance into the root node. Make sure that `ChatLogic` has no ownership
+relation to the `ChatBot` instance and thus is no longer responsible for memory allocation and deallocation.
+Note that the member `_chatBot` of `ChatLogic` remains so it can be used as a communication handle between GUI and `ChatBot` instance.
+Make all required changes in files `chatlogic.h` / `chatlogic.cpp` and `graphnode.h` / `graphnode.cpp`.
+When the program is executed, messages on which part of the Rule of Five components of `ChatBot` is called should be printed to the console.
+When sending a query to the `ChatBot`, the output should look like the following:
+ChatBot Constructor
+ChatBot Move Constructor
+ChatBot Move Assignment Operator
+ChatBot Destructor
+ChatBot Destructor
+
+My Summary
+ChatBot now needs to make proper use of the Copy and Move rules.
+Instance on stack in LoadAnswerGraphFromFile
+Move to root node, ChatLogic does not own ChatBot. No more memory alloc or de-alloc.
+_chatbot in ChatLogic used for GUI comms
+*/
+
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -18,10 +40,10 @@ ChatLogic::ChatLogic()
     ////
 
     // create instance of chatbot
-    _chatBot = new ChatBot("../images/chatbot.png");
+    //_chatBot = new ChatBot("../images/chatbot.png"); // no need for new allocation.
 
     // add pointer to chatlogic so that chatbot answers can be passed on to the GUI
-    _chatBot->SetChatLogicHandle(this);
+    //_chatBot->SetChatLogicHandle(this);   // replaced with unique_ptr
 
     ////
     //// EOF STUDENT CODE
@@ -33,19 +55,21 @@ ChatLogic::~ChatLogic()
     ////
 
     // delete chatbot instance
-    delete _chatBot;
+    //delete _chatBot;  // no new means no delete needed
 
-    // delete all nodes
-    for (auto it = std::begin(_nodes); it != std::end(_nodes); ++it)
-    {
-        delete *it;
-    }
+    //// Nodes now get deleted when scope is lost.
+    // // delete all nodes
+    // for (auto it = std::begin(_nodes); it != std::end(_nodes); ++it)
+    // {
+    //     delete *it;
+    // }
 
-    // delete all edges
-    for (auto it = std::begin(_edges); it != std::end(_edges); ++it)
-    {
-        delete *it;
-    }
+    //// Edges now get deleted when scope is lost.
+    // // delete all edges
+    // for (auto it = std::begin(_edges); it != std::end(_edges); ++it)
+    // {
+    //     delete *it;
+    // }
 
     ////
     //// EOF STUDENT CODE
@@ -127,12 +151,12 @@ void ChatLogic::LoadAnswerGraphFromFile(std::string filename)
                         ////
 
                         // check if node with this ID exists already
-                        auto newNode = std::find_if(_nodes.begin(), _nodes.end(), [&id](GraphNode *node) { return node->GetID() == id; });
+                        auto newNode = std::find_if(_nodes.begin(), _nodes.end(), [&id](std::unique_ptr<GraphNode>& node) { return node->GetID() == id; });
 
                         // create new element if ID does not yet exist
                         if (newNode == _nodes.end())
                         {
-                            _nodes.emplace_back(new GraphNode(id));
+                            _nodes.emplace_back(std::make_unique<GraphNode>(id));
                             newNode = _nodes.end() - 1; // get iterator to last element
 
                             // add all answers to current node
@@ -156,21 +180,21 @@ void ChatLogic::LoadAnswerGraphFromFile(std::string filename)
                         if (parentToken != tokens.end() && childToken != tokens.end())
                         {
                             // get iterator on incoming and outgoing node via ID search
-                            auto parentNode = std::find_if(_nodes.begin(), _nodes.end(), [&parentToken](GraphNode *node) { return node->GetID() == std::stoi(parentToken->second); });
-                            auto childNode = std::find_if(_nodes.begin(), _nodes.end(), [&childToken](GraphNode *node) { return node->GetID() == std::stoi(childToken->second); });
+                            auto parentNode = std::find_if(_nodes.begin(), _nodes.end(), [&parentToken](std::unique_ptr<GraphNode> &node) { return node->GetID() == std::stoi(parentToken->second); });
+                            auto childNode = std::find_if(_nodes.begin(), _nodes.end(), [&childToken](std::unique_ptr<GraphNode> &node) { return node->GetID() == std::stoi(childToken->second); });
 
-                            // create new edge
-                            GraphEdge *edge = new GraphEdge(id);
-                            edge->SetChildNode(*childNode);
-                            edge->SetParentNode(*parentNode);
-                            _edges.push_back(edge);
+                            // create new edge 
+                            std::unique_ptr<GraphEdge> edge = std::make_unique<GraphEdge>(id);
+                            edge->SetChildNode(childNode->get()); //only raw pointer needed
+                            edge->SetParentNode(parentNode->get());
+                            //_edges.push_back(edge); //_edges no longer exist
 
                             // find all keywords for current node
                             AddAllTokensToElement("KEYWORD", tokens, *edge);
 
                             // store reference in child node and parent node
-                            (*childNode)->AddEdgeToParentNode(edge);
-                            (*parentNode)->AddEdgeToChildNode(edge);
+                            (*childNode)->AddEdgeToParentNode(edge.get());      // raw pointer for parent
+                            (*parentNode)->AddEdgeToChildNode(std::move(edge)); // move unique_ptr for child
                         }
 
                         ////
@@ -206,7 +230,7 @@ void ChatLogic::LoadAnswerGraphFromFile(std::string filename)
 
             if (rootNode == nullptr)
             {
-                rootNode = *it; // assign current node to root
+                rootNode = it->get(); // assign current node to root
             }
             else
             {
@@ -215,9 +239,14 @@ void ChatLogic::LoadAnswerGraphFromFile(std::string filename)
         }
     }
 
+    // Our new ChatBot needs to be added to root node, declare here.
+    // tweaked from previous default constructor
+    ChatBot chatBotTemp("../images/chatbot.png"); // with memory allocation
+    chatBotTemp.SetChatLogicHandle(this);
+
     // add chatbot to graph root node
-    _chatBot->SetRootNode(rootNode);
-    rootNode->MoveChatbotHere(_chatBot);
+    chatBotTemp.SetRootNode(rootNode);
+    rootNode->MoveChatbotHere(std::move(chatBotTemp));
     
     ////
     //// EOF STUDENT CODE
