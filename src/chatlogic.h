@@ -9,7 +9,7 @@ changes to class `ChatLogic` where possible.
 
 My Summary:
 _nodes become unique_ptr in GraphNodes are moved to ChatLogic class
-All handling will need std::move() to ChatLogic,
+All handling will need std::move() to ChatLogic,   /////Correction, no move needed, only pass by reference and raw pointers.
 but to just be const raw functions when other functions are reading the data.
 */
 #ifndef CHATLOGIC_H_
@@ -33,7 +33,9 @@ private:
 
     // data handles (owned)
     std::vector<std::unique_ptr<GraphNode>> _nodes; // all references now need protecting
-    std::vector<GraphEdge *> _edges;
+
+    //Not owned by chatlogic anymore.
+    //std::vector<GraphEdge *> _edges;
 
     ////
     //// EOF STUDENT CODE
