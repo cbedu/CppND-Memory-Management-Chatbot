@@ -241,12 +241,12 @@ void ChatLogic::LoadAnswerGraphFromFile(std::string filename)
 
     // Our new ChatBot needs to be added to root node, declare here.
     // tweaked from previous default constructor
-    _chatBot = new ChatBot("../images/chatbot.png");
-    _chatBot->SetChatLogicHandle(this);
+    ChatBot chatBotTemp("../images/chatbot.png"); // with memory allocation
+    chatBotTemp.SetChatLogicHandle(this);
 
     // add chatbot to graph root node
-    _chatBot->SetRootNode(rootNode);
-    rootNode->MoveChatbotHere(std::move(std::make_unique<ChatBot>(*_chatBot)));
+    chatBotTemp.SetRootNode(rootNode);
+    rootNode->MoveChatbotHere(std::move(chatBotTemp));
     
     ////
     //// EOF STUDENT CODE
